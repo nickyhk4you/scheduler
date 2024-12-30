@@ -15,15 +15,5 @@ public class SchedulerApplication {
         SpringApplication.run(SchedulerApplication.class, args);
     }
 
-//    @Bean
-//    CommandLineRunner runner(PipelineConfig pipelineConfig) {
-//        return args -> {
-//            System.out.println("Loaded Pipelines: " + pipelineConfig.getPipelines().size());
-//            pipelineConfig.getPipelines().forEach(pipeline -> {
-//                System.out.println("Pipeline Name: " + pipeline.getPlName());
-//                System.out.println("Schedule: " + pipeline.getSchedule());
-//                System.out.println("Operation: " + pipeline.getOperation());
-//            });
-//        };
-//    }
+
 }
