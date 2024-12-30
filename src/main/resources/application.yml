@@ -1,6 +1,6 @@
 pipelines:
   - pl_name: "del_changyi_inboundcdp_to_startdt_outboundcdp"
-    schedule: "0 4 * * *"
+    schedule: "* * * * *"
     source:
       path: "s3://175814205108-datafabric-sftp-prd-cn-north-1/home/changyi/inbound/cdp/"
     target:
