@@ -1,0 +1,80 @@
+pipelines:
+  - pl_name: "del_changyi_inboundcdp_to_startdt_outboundcdp"
+    schedule: "0 4 * * *"
+    source:
+      path: "s3://175814205108-datafabric-sftp-prd-cn-north-1/home/changyi/inbound/cdp/"
+    target:
+      path: "s3://175814205108-datafabric-sftp-prd-cn-north-1/home/startdt/outbound/changyi/"
+    operation: "move"  # 指定操作类型，可以是 "move" 或 "copy"
+    sns_topic: "datalab-cn-airflowsns-newcdp"
+
+  - pl_name: "del_changyi_inboundc360_to_changyi_inboundcdp"
+    schedule: "20 3 * * *"
+    source:
+      path: "s3://175814205108-datafabric-sftp-prd-cn-north-1/home/changyi/inbound/c360/{date_folder}/"
+    target:
+      path: "s3://175814205108-datafabric-sftp-prd-cn-north-1/home/changyi/inbound/cdp/{date_folder}/"
+    source_keys:
+      - "members"
+      - "member_departments"
+      - "departments"
+      - "member_external_behavior_data"
+      - "wx_user_corp_external"
+      - "impression_tag"
+      - "impression_tag_group"
+      - "impression_tag_operate_log"
+      - "impression_tag_relation"
+      - "work_external_tag"
+      - "work_external_tag_group"
+      - "work_external_user_tag"
+      - "work_external_user_relation"
+      - "drainage_contact_channel_labels"
+      - "drainage_contact_channels"
+      - "drainage_contact_members"
+      - "drainage_contacts"
+      - "customer_inherit"
+      - "reserve_service"
+      - "reserve_service_relation"
+      - "reserve_order"
+      - "reserve_log"
+      - "invite_record"
+      - "plans"
+      - "plan_tasks"
+      - "plan_task_conditions"
+      - "plan_task_specify_crowd"
+      - "task_allot_log"
+      - "task_condition_data"
+      - "excitation_member_data"
+      - "excitation_member_data_record"
+      - "excitation_level_rule"
+    operation: "copy"
+    sns_topic: "datalab-cn-airflowsns-newcdp"
+
+  - pl_name: "del_datascience_inboundcdp_to_startdt_outboundcdp"
+    schedule: "0 21 * * *"
+    source:
+      path: "s3://175814205108-datafabric-sftp-prd-cn-north-1/home/data_science/inbound/cdp/"
+    target:
+      path: "s3://175814205108-datafabric-sftp-prd-cn-north-1/home/startdt/outbound/data_science/"
+    operation: "move"  # 指定操作类型，可以是 "move" 或 "copy"
+    sns_topic: "datalab-cn-airflowsns-newcdp"
+
+  - pl_name: "del_convertlab_inboundcdp_to_startdt_outboundcdp"
+    schedule: "0 2 * * *"
+    source:
+      path: "s3://175814205108-datafabric-sftp-prd-cn-north-1/home/convertlab/inbound/cdp/"
+      # 没有指定 source_keys 字段，默认处理整个 source 路径
+    target:
+      path: "s3://175814205108-datafabric-sftp-prd-cn-north-1/home/startdt/outbound/convertlab/"
+    operation: "move"  # 指定操作类型，可以是 "move" 或 "copy"
+    sns_topic: "datalab-cn-airflowsns-newcdp"
+
+  - pl_name: "del_convertlab_inboundcdp_to_convertlab_inboundc360"
+    schedule: "55 1 * * *"
+    source:
+      path: "s3://175814205108-datafabric-sftp-prd-cn-north-1/home/convertlab/inbound/cdp/"
+      # 没有指定 source_keys 字段，默认处理整个 source 路径
+    target:
+      path: "s3://175814205108-datafabric-sftp-prd-cn-north-1/home/convertlab/inbound/c360/"
+    operation: "copy"  # 指定操作类型，可以是 "move" 或 "copy"
+    sns_topic: "datalab-cn-airflowsns-prd"
