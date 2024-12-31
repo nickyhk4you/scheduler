@@ -24,6 +24,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -76,6 +77,11 @@ public class DataIntegrationTaskScheduler {
         });
     }
 
+    public Optional<PipelineConfig.Pipeline> findPipelineByName(String pipelineName) {
+        return pipelineConfig.getPipelines().stream()
+                .filter(p -> p.getPlName().equals(pipelineName))
+                .findFirst();
+    }
 
     private boolean isWithinExecutionWindow(LocalDateTime now, LocalDateTime nextExecutionTime) {
         return nextExecutionTime != null &&
@@ -144,8 +150,8 @@ public class DataIntegrationTaskScheduler {
         jobExecution.setFilesProcessed(processedSourceFiles.size());
     }
 
-    private void executeOperation(String operation, String sourcePath, String targetPath,
-                                  String pipelineName, List<String> sourceKeys) {
+    public JobExecution executeOperation(String operation, String sourcePath, String targetPath,
+                                         String pipelineName, List<String> sourceKeys) {
         JobExecution jobExecution = new JobExecution();
         jobExecution.setPipelineName(pipelineName);
         jobExecution.setSourcePath(sourcePath);
@@ -168,6 +174,7 @@ public class DataIntegrationTaskScheduler {
             jobExecution.setEndTime(LocalDateTime.now());
             jobExecutionRepository.save(jobExecution);
         }
+        return jobExecution;
     }
 
     private void copyLocalFiles(String sourcePath, String targetPath, List<String> sourceKeys, JobExecution jobExecution) {
