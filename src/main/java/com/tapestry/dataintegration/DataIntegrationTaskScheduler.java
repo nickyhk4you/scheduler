@@ -16,11 +16,13 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Component
@@ -177,15 +179,44 @@ public class DataIntegrationTaskScheduler {
                 for (String key : sourceKeys) {
                     String sourceFile = sourcePath + key;
                     String targetFile = targetPath + key;
-                    Files.copy(Paths.get(sourceFile), Paths.get(targetFile), StandardCopyOption.REPLACE_EXISTING);
-                    processedSourceFiles.add(sourceFile);
-                    processedTargetFiles.add(targetFile);
-                    log.info("Copied file: {}", key);
+                    Files.walk(Paths.get(sourceFile))
+                            .forEach(source -> {
+                                try {
+                                    String relativePath = Paths.get(sourceFile).relativize(source).toString();
+                                    Path targetFilePath = Paths.get(targetFile).resolve(relativePath);
+                                    if (Files.isDirectory(source)) {
+                                        Files.createDirectories(targetFilePath);
+                                    } else {
+                                        Files.createDirectories(targetFilePath.getParent());
+                                        Files.copy(source, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
+                                        processedSourceFiles.add(source.toString());
+                                        processedTargetFiles.add(targetFilePath.toString());
+                                        log.info("Copied file: {} to {}", source, targetFilePath);
+                                    }
+                                } catch (IOException e) {
+                                    throw new RuntimeException("Failed to copy file: " + source, e);
+                                }
+                            });
                 }
             } else {
-                Files.copy(Paths.get(sourcePath), Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
-                processedSourceFiles.add(sourcePath);
-                processedTargetFiles.add(targetPath);
+                Files.walk(Paths.get(sourcePath))
+                        .forEach(source -> {
+                            try {
+                                String relativePath = Paths.get(sourcePath).relativize(source).toString();
+                                Path targetFilePath = Paths.get(targetPath).resolve(relativePath);
+                                if (Files.isDirectory(source)) {
+                                    Files.createDirectories(targetFilePath);
+                                } else {
+                                    Files.createDirectories(targetFilePath.getParent());
+                                    Files.copy(source, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
+                                    processedSourceFiles.add(source.toString());
+                                    processedTargetFiles.add(targetFilePath.toString());
+                                    log.info("Copied file: {} to {}", source, targetFilePath);
+                                }
+                            } catch (IOException e) {
+                                throw new RuntimeException("Failed to copy file: " + source, e);
+                            }
+                        });
             }
 
             jobExecution.setSourceFiles(processedSourceFiles);
@@ -196,6 +227,7 @@ public class DataIntegrationTaskScheduler {
             throw new RuntimeException("Failed to copy local files", e);
         }
     }
+
 
     private void deleteSource(String sourcePath, List<String> sourceKeys) {
         try {
@@ -219,18 +251,38 @@ public class DataIntegrationTaskScheduler {
                     }
                 }
             } else {
+                Path sourceDir = Paths.get(sourcePath);
                 if (sourceKeys != null && !sourceKeys.isEmpty()) {
                     for (String key : sourceKeys) {
-                        Files.delete(Paths.get(sourcePath + key));
-                        log.info("Deleted file: {}", key);
+                        Files.walk(sourceDir.resolve(key))
+                                .sorted(Comparator.reverseOrder())
+                                .filter(path -> !path.equals(sourceDir))
+                                .forEach(path -> {
+                                    try {
+                                        Files.delete(path);
+                                        log.info("Deleted: {}", path);
+                                    } catch (IOException e) {
+                                        throw new RuntimeException("Failed to delete: " + path, e);
+                                    }
+                                });
                     }
                 } else {
-                    Files.delete(Paths.get(sourcePath));
+                    Files.walk(sourceDir)
+                            .sorted(Comparator.reverseOrder())
+                            .filter(path -> !path.equals(sourceDir))
+                            .forEach(path -> {
+                                try {
+                                    Files.delete(path);
+                                    log.info("Deleted: {}", path);
+                                } catch (IOException e) {
+                                    throw new RuntimeException("Failed to delete: " + path, e);
+                                }
+                            });
                 }
             }
         } catch (IOException e) {
-            log.error("Failed to delete source: {}", e.getMessage());
-            throw new RuntimeException("Failed to delete source", e);
+            log.error("Failed to delete source contents: {}", e.getMessage());
+            throw new RuntimeException("Failed to delete source contents", e);
         }
     }
 
