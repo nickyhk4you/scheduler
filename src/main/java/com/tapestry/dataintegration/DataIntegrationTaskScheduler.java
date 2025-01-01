@@ -172,7 +172,9 @@ public class DataIntegrationTaskScheduler {
             throw e;
         } finally {
             jobExecution.setEndTime(LocalDateTime.now());
-            jobExecutionRepository.save(jobExecution);
+            if (jobExecution.getFilesProcessed() > 0) {
+                jobExecutionRepository.save(jobExecution);
+            }
         }
         return jobExecution;
     }
